@@ -172,7 +172,7 @@ async function initReminderCron(customCronTime) {
     cronTime = await getAppSetting('cron_time', '09:00');
   }
 
-  let cronExpression = process.env.CRON_SCHEDULE;
+  let cronExpression = process.env.ALERT_CRON || process.env.CRON_SCHEDULE;
   if (!cronExpression || customCronTime) {
     // Convert HH:MM to cron expression
     if (cronTime && cronTime.includes(':')) {

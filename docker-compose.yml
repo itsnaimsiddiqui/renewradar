@@ -1,0 +1,53 @@
+services:
+  mariadb:
+    image: mariadb:10.11
+    container_name: renewradar-mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    ports:
+      - "127.0.0.1:3306:3306"
+
+  api:
+    build:
+      context: "./Node Express Project"
+      dockerfile: Dockerfile
+    container_name: renewradar-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: mariadb
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    ports:
+      - "5001:5001"
+    depends_on:
+      - mariadb
+
+  web:
+    build:
+      context: "./React Vite Project"
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "/api"
+    container_name: renewradar-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+volumes:
+  mariadb_data:

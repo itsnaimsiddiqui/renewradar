@@ -1,4 +1,7 @@
-const API_BASE = '/api';
+// Base API URL: Defaults to '/api' (same-origin / cPanel single deployment) or custom URL (e.g. Netlify/Vercel -> cPanel backend)
+const API_BASE = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace(/\/+$/, '')
+  : '/api';
 
 // Token storage key
 const TOKEN_KEY = 'renewradar_token';

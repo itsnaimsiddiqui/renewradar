@@ -2,7 +2,20 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+const fs = require('fs');
+
+// Support loading .env from local project, root directory, or cwd
+const candidateEnvPaths = [
+  path.resolve(process.cwd(), '.env'),
+  path.resolve(__dirname, '../.env'),
+  path.resolve(__dirname, '../../.env')
+];
+const envFile = candidateEnvPaths.find(p => fs.existsSync(p));
+if (envFile) {
+  require('dotenv').config({ path: envFile });
+} else {
+  require('dotenv').config();
+}
 
 const { initDB } = require('./config/db');
 const { initTelegramBot } = require('./services/telegramBot');
@@ -31,8 +44,16 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Serve frontend static build if available (e.g. for single-deployment setup on cPanel)
-const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
+const fs = require('fs');
+
+// Serve frontend static build if available (supports local mono-repo, cPanel root, and VPS subdirectories)
+const distCandidates = [
+  path.resolve(__dirname, '../../frontend/dist'),
+  path.resolve(__dirname, '../frontend/dist'),
+  path.resolve(__dirname, '../dist'),
+  path.resolve(__dirname, './dist')
+];
+const frontendDistPath = distCandidates.find(p => fs.existsSync(p)) || distCandidates[0];
 app.use(express.static(frontendDistPath));
 
 app.get('*', (req, res, next) => {
@@ -40,7 +61,6 @@ app.get('*', (req, res, next) => {
     return next();
   }
   const indexPath = path.join(frontendDistPath, 'index.html');
-  const fs = require('fs');
   if (fs.existsSync(indexPath)) {
     return res.sendFile(indexPath);
   }
@@ -59,6 +79,24 @@ app.get('*', (req, res, next) => {
 // Bootstrapping
 async function startServer() {
   try {
+    // 0. Startup Security Hygiene Check: Reject unconfigured placeholder secrets
+    const FORBIDDEN_PLACEHOLDERS = [
+      'your_random_long_secret_key_change_me_in_production',
+      'your_random_long_secret_key',
+      'your_secure_password',
+      'your_secure_admin_password'
+    ];
+    if (process.env.JWT_SECRET && FORBIDDEN_PLACEHOLDERS.includes(process.env.JWT_SECRET.trim())) {
+      console.error('❌ FATAL: JWT_SECRET is set to an example placeholder value.');
+      console.error('💡 Please generate a real secret in your .env file using: openssl rand -hex 32');
+      process.exit(1);
+    }
+    if (process.env.ADMIN_PASSWORD && FORBIDDEN_PLACEHOLDERS.includes(process.env.ADMIN_PASSWORD.trim())) {
+      console.error('❌ FATAL: ADMIN_PASSWORD is set to an example placeholder value.');
+      console.error('💡 Please configure a strong, unique password in your .env file.');
+      process.exit(1);
+    }
+
     // 1. Connect or prepare MariaDB
     await initDB();
 

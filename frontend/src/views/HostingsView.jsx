@@ -126,18 +126,18 @@ export default function HostingsView({
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto relative">
+            <table className="w-full text-left text-xs whitespace-nowrap">
               <thead className="bg-slate-50/80 text-slate-500 font-semibold border-b border-slate-100 uppercase tracking-wider">
                 <tr>
-                  <th className="py-3 px-5">Package & Domain</th>
-                  <th className="py-3 px-5">Provider & Server</th>
-                  <th className="py-3 px-5">Assigned Client</th>
-                  <th className="py-3 px-5">Expiry Date</th>
-                  <th className="py-3 px-5">Urgency Badge</th>
-                  <th className="py-3 px-5">Billing Cycle</th>
-                  <th className="py-3 px-5">Pricing (Cost / Fee)</th>
-                  <th className="py-3 px-5 text-right">Actions</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Package & Domain</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Provider & Server</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Assigned Client</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Expiry & Status</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Billing & Fee</th>
+                  <th className="py-3 px-4 text-right whitespace-nowrap sticky right-0 bg-slate-50 z-10 shadow-[-6px_0_10px_-4px_rgba(0,0,0,0.06)]">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
@@ -148,127 +148,120 @@ export default function HostingsView({
                   const isWarning = days > 7 && days <= 30;
 
                   return (
-                    <tr key={h.id} className="hover:bg-slate-50/60 transition">
+                    <tr key={h.id} className="hover:bg-slate-50/60 transition group">
                       {/* Package & Domain */}
-                      <td className="py-3.5 px-5">
-                        <div className="font-bold text-slate-900 text-sm flex items-center space-x-1.5">
-                          <HardDrive className="w-4 h-4 text-emerald-600" />
-                          <span>{h.package_name}</span>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="font-bold text-slate-900 text-sm flex items-center space-x-1.5 whitespace-nowrap">
+                          <HardDrive className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span className="whitespace-nowrap">{h.package_name}</span>
                           {h.is_bundle && (
-                            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded">
+                            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded whitespace-nowrap">
                               Combo
                             </span>
                           )}
                         </div>
                         {h.primary_domain && (
-                          <div className="flex items-center space-x-1 text-[11px] text-blue-600 font-medium mt-0.5">
-                            <Globe className="w-3 h-3" />
-                            <span>{h.primary_domain}</span>
+                          <div className="flex items-center space-x-1 text-[11px] text-blue-600 font-medium mt-0.5 whitespace-nowrap">
+                            <Globe className="w-3 h-3 shrink-0" />
+                            <span className="whitespace-nowrap">{h.primary_domain}</span>
                           </div>
                         )}
                         {h.notes && (
-                          <p className="text-[11px] text-slate-400 mt-1 italic line-clamp-1 max-w-xs">
+                          <p className="text-[11px] text-slate-400 mt-1 italic line-clamp-1 max-w-xs whitespace-normal">
                             {h.notes}
                           </p>
                         )}
                       </td>
 
                       {/* Provider & Server */}
-                      <td className="py-3.5 px-5">
-                        <span className="font-semibold text-slate-800 block">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="font-semibold text-slate-800 block whitespace-nowrap">
                           {h.provider || 'Platform'}
                         </span>
-                        <span className="text-[11px] font-mono text-slate-400">
+                        <span className="text-[11px] font-mono text-slate-400 whitespace-nowrap">
                           {h.server_name || 'Server'} &bull; {h.ip_address || ''}
                         </span>
                       </td>
 
                       {/* Client */}
-                      <td className="py-3.5 px-5">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         {h.client_name ? (
                           <div>
-                            <div className="font-semibold text-slate-800">{h.client_name}</div>
+                            <div className="font-semibold text-slate-800 whitespace-nowrap">{h.client_name}</div>
                             {h.client_phone && (
                               <a
                                 href={`tel:${h.client_phone}`}
-                                className="inline-flex items-center space-x-1 text-[11px] text-emerald-700 font-medium hover:underline mt-0.5"
+                                className="inline-flex items-center space-x-1 text-[11px] text-emerald-700 font-medium hover:underline mt-0.5 whitespace-nowrap"
                               >
-                                <Phone className="w-3 h-3" />
-                                <span>{h.client_phone}</span>
+                                <Phone className="w-3 h-3 shrink-0" />
+                                <span className="whitespace-nowrap">{h.client_phone}</span>
                               </a>
                             )}
                           </div>
                         ) : (
-                          <span className="text-slate-400 italic">Unassigned</span>
+                          <span className="text-slate-400 italic whitespace-nowrap">Unassigned</span>
                         )}
                       </td>
 
-                      {/* Expiry Date */}
-                      <td className="py-3.5 px-5">
-                        <span className="font-semibold text-slate-800 block">
-                          {h.expiry_date ? h.expiry_date.split('T')[0] : 'N/A'}
+                      {/* Expiry & Status Badge */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div>
+                          {isExpired ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200 whitespace-nowrap">
+                              EXPIRED ({Math.abs(days)}d ago)
+                            </span>
+                          ) : isCritical ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap">
+                              {days} Days Left (Call!)
+                            </span>
+                          ) : isWarning ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 whitespace-nowrap">
+                              {days} Days Left
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 whitespace-nowrap">
+                              {days} Days (Safe)
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-slate-400 mt-1 block whitespace-nowrap">
+                          Expires: {h.expiry_date ? h.expiry_date.split('T')[0] : 'N/A'}
                         </span>
                       </td>
 
-                      {/* Urgency Badge */}
-                      <td className="py-3.5 px-5">
-                        {isExpired ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200">
-                            EXPIRED ({Math.abs(days)}d ago)
-                          </span>
-                        ) : isCritical ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                            {days} Days Left (Call!)
-                          </span>
-                        ) : isWarning ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
-                            {days} Days Left
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-                            {days} Days (Safe)
-                          </span>
-                        )}
+                      {/* Billing & Price */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="text-slate-900 font-bold whitespace-nowrap">${h.client_price || '0.00'}</div>
+                        <div className="flex items-center space-x-1 text-[11px] text-slate-400 mt-0.5 whitespace-nowrap">
+                          <span className="capitalize">{h.billing_cycle || 'annual'}</span>
+                          <span>&bull;</span>
+                          <span>Cost: ${h.cost_price || '0.00'}</span>
+                        </div>
                       </td>
 
-                      {/* Billing Cycle */}
-                      <td className="py-3.5 px-5">
-                        <span className="capitalize font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md text-[11px]">
-                          {h.billing_cycle || 'annual'}
-                        </span>
-                      </td>
-
-                      {/* Pricing */}
-                      <td className="py-3.5 px-5">
-                        <div className="text-slate-900 font-bold">${h.client_price || '0.00'}</div>
-                        <span className="text-[11px] text-slate-400">
-                          Cost: ${h.cost_price || '0.00'}
-                        </span>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-3.5 px-5 text-right">
-                        <div className="flex items-center justify-end space-x-1.5">
+                      {/* Actions (Sticky Right) */}
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-slate-50/90 transition shadow-[-6px_0_10px_-4px_rgba(0,0,0,0.06)] z-10">
+                        <div className="flex items-center justify-end space-x-1.5 whitespace-nowrap">
                           <button
                             onClick={() => onRenewHosting(h.id)}
                             title="Quick Renew +1 Year"
-                            className="px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-lg transition"
+                            className="px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-lg transition whitespace-nowrap shadow-xs"
                           >
                             +1yr
                           </button>
                           <button
                             onClick={() => onOpenEditModal(h)}
                             title="Edit Hosting"
-                            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition"
+                            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition shrink-0"
                           >
-                            <Edit3 className="w-4 h-4" />
+                            <Edit3 className="w-4 h-4 shrink-0" />
                           </button>
                           <button
                             onClick={() => onDeleteHosting(h.id)}
                             title="Delete Hosting"
-                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition shrink-0"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4 shrink-0" />
                           </button>
                         </div>
                       </td>

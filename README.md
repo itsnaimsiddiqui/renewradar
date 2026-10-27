@@ -1,120 +1,99 @@
 # RenewRadar - Multi-Provider Domain & Hosting Expiry Management System
 
-> **A production-ready SaaS application for agencies, developers, and IT teams to track client domains, hosting servers, and combo bundles across multiple providers (Namecheap, Hostinger, GoDaddy, HostGator, cPanel, etc.) with automated Telegram alerts, custom reminder schedules, and interactive English Q&A.**
+> **RenewRadar** is a modern, high-performance web application designed for **freelancers, digital agencies, and IT service providers** to centralize client domain names, hosting packages, and combo bundles across multiple registrars and servers with automated Telegram notifications and bot commands.
+
+Built with **React 18, Vite, Node.js, Express, and MariaDB/MySQL**.
 
 ---
 
-## 🌟 Key Architecture & Capabilities
+## 🎯 Target Users
 
-1. **Multi-Platform Provider Management**:
-   - Add, edit, or delete connected platforms (e.g. **Namecheap Account 1**, **Namecheap Account 2**, **Hostinger**, **HostGator**, **GoDaddy**).
-   - Filter and track domain registrars and hosting providers dynamically.
-
-2. **Client Combo Bundles (Domain + Hosting bought together)**:
-   - When a domain and hosting package are purchased together for a client, register them as a linked **Combo Bundle**.
-   - Shared renewal cycle, combined billing, and 1-click **Renew Combo (+1yr)** extending both assets together.
-
-3. **Urgent Client Call Center**:
-   - Automatically prioritizes clients whose domains/hostings are **already expired** or **expiring in &le; 7 days**.
-   - Includes direct `tel:...` click-to-call links so you can immediately phone clients from your phone or laptop.
-
-4. **Dynamic Telegram Bot Hub & Reminders**:
-   - Configure **Bot Token** and **Telegram Chat ID** directly from the web UI — no terminal or file editing required!
-   - Customizable notification tiers: Choose exactly when you want alerts (e.g. **60, 45, 30, 15, 7, 3, 1, and 0 days**).
-   - Set custom daily check time (e.g., `09:00 AM`).
-   - Dispatches rich Telegram alert cards with client name, phone number, renewal fee, and registrar label.
-   - Interactive natural language English queries:
-     * *"Which domains are expired?"*
-     * *"Which hosting expired?"*
-     * *"Who should I call today?"*
-     * *"What is expiring soon?"*
-     * `/status`, `/expired`, `/expiring`, `/call_list`, `/client <name>`
-
-5. **Clean, Modern SaaS Design**:
-   - Built with **React 18 + Tailwind CSS + Lucide Icons**.
-   - Fast, clean, mobile-responsive white layout.
-   - Instant prototyping: Works right out of the box with in-memory mock fallback even before database setup!
+- **Freelancers & Solopreneurs**: Keep track of client domains and hostings without missing renewals or paying penalty recovery fees.
+- **Digital Agencies & Web Studios**: Manage hundreds of client digital assets across Namecheap, Hostinger, GoDaddy, HostGator, and private cPanel VPS servers.
+- **IT Managed Service Providers (MSPs)**: Automate expiry warnings and maintain an urgent client outreach pipeline.
 
 ---
 
-## 📁 Project Structure
+## ⚡ 5 Core Differentiating Features
+
+1. **Expiry Tracking & Multi-Platform Management**:
+   - Automated real-time calculation of days remaining until expiration.
+   - Color-coded urgency badges (`Expired`, `Expiring in 5 days`, `Active`).
+   - Group domains and hostings by account/platform (e.g., *Namecheap Account 1*, *Hostinger Cloud*).
+2. **Renewal Management & Linked Combo Bundles**:
+   - Link client domain and hosting packages together into a single **Combo Bundle**.
+   - 1-Click synchronized renewal: extends both domain and hosting expiry dates with a single confirmation click.
+   - Historical renewal logging and cost vs. client pricing ledger.
+3. **Comprehensive Financial & Operations Dashboard**:
+   - High-level KPIs: Active Domains, Hosting Servers, Clients, and Total Expired Assets.
+   - Financial profit calculation: Gross Client Revenue vs. Asset Cost Price.
+   - **Urgent Call Center**: Prioritizes clients whose assets are expiring in $\le 7$ days with direct click-to-call mobile integration.
+4. **Automated Multi-Tier Telegram Alerts**:
+   - Configurable alert tiers (e.g., 30, 15, 7, 3, 1, and 0 days prior to expiry).
+   - Automated scheduled daily scans via cron.
+   - Rich Markdown Telegram notification cards sent directly to agency administrators.
+5. **Interactive Telegram Bot Commands**:
+   - Query system status on the go directly inside Telegram.
+   - Supported bot commands: `/start`, `/status`, `/expiring`, `/summary`, `/help`.
+
+---
+
+## 🌐 Live Demo & Testing
+
+- **Live Frontend**: [https://renewradar.netlify.app](https://renewradar.netlify.app)
+- **Live API Endpoint**: `https://renewradar-api.fatmonk.studio/api`
+- **Demo Administrator Credentials**:
+  - **Username**: `admin`
+  - **Password**: `renewradar2026`
+- **Sample Data Included**: Includes sample domains, hosting servers, combo bundles, and an upcoming 5-day expiry so automated alerts can be immediately previewed.
+
+---
+
+## 📁 Repository Structure
 
 ```
-renewradar/
-├── backend/
+RenewRadar/
+├── README.md               # Product overview, features, and quickstart
+├── HowToSetup.md           # Step-by-step VPS & Docker installation guide
+├── CLAUDE.md               # Architectural reference & guide for AI tools
+├── CHANGELOG.md            # Release version history starting from v1.0.0
+├── LICENSE-NOTE.md         # Commercial licensing terms for buyers
+├── docker-compose.yml      # Complete Docker stack (MariaDB + API + Web)
+├── database/
+│   ├── schema.sql          # Creates complete database from empty with keys & indexes
+│   └── seed.sql            # Demo clients, domains, hostings, and bundles
+├── docs/
+│   └── API.md              # Complete Express API endpoint reference
+├── Node Express Project/   # Node.js Express REST API & Telegram Service
 │   ├── src/
-│   │   ├── config/
-│   │   │   └── db.js            # MariaDB / MySQL pool + in-memory development fallback
-│   │   ├── controllers/
-│   │   │   ├── authController.js
-│   │   │   ├── dashboardController.js
-│   │   │   ├── domainController.js
-│   │   │   ├── hostingController.js
-│   │   │   ├── clientController.js
-│   │   │   ├── platformController.js
-│   │   │   ├── bundleController.js
-│   │   │   └── telegramController.js
-│   │   ├── models/
-│   │   │   └── schema.sql       # MariaDB / MySQL database schema + seed data
-│   │   ├── routes/
-│   │   │   └── api.js
-│   │   ├── services/
-│   │   │   ├── authService.js
-│   │   │   ├── telegramBot.js   # Interactive Q&A and alert dispatcher
-│   │   │   └── reminderCron.js  # Scheduled automated daily checks
-│   │   └── server.js            # Express server (Node.js 18.x - 22.x compatible)
-│   ├── .env.example             # Clean configuration template
+│   ├── .env.example        # Single annotated configuration file
 │   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── DomainModal.jsx
-│   │   │   ├── HostingModal.jsx
-│   │   │   ├── ClientModal.jsx
-│   │   │   ├── BundleModal.jsx
-│   │   │   ├── PlatformModal.jsx
-│   │   │   └── CpanelGuideModal.jsx
-│   │   ├── views/
-│   │   │   ├── DashboardView.jsx
-│   │   │   ├── DomainsView.jsx
-│   │   │   ├── HostingsView.jsx
-│   │   │   ├── ClientsView.jsx
-│   │   │   ├── PlatformsView.jsx
-│   │   │   ├── TelegramView.jsx
-│   │   │   └── LoginView.jsx
-│   │   ├── api.js
-│   │   ├── App.jsx
-│   │   └── index.css
-│   ├── dist/                    # Production static build
-│   ├── tailwind.config.js
-│   ├── vite.config.js
-│   └── package.json
-├── DEPLOYMENT_CPANEL.md         # Detailed cPanel step-by-step guide
-└── README.md
+└── React Vite Project/     # React 18 / Vite Single Page Application
+    ├── src/
+    └── package.json
 ```
 
 ---
 
-## 🚀 Running Locally
+## 🚀 Quick Setup
 
-### 1. Start the Backend
+Please see [HowToSetup.md](./HowToSetup.md) for full instructions on VPS and Docker Compose deployments.
+
+### Local Development
 ```bash
-cd backend
+# 1. Start Backend API
+cd "Node Express Project"
 npm install
 npm run dev
-# Server will run on http://localhost:5001
-```
 
-### 2. Start the Frontend
-```bash
-cd frontend
+# 2. Start Frontend Web App
+cd "../React Vite Project"
 npm install
 npm run dev
-# Frontend will run on http://localhost:5173 with auto-proxy to backend
 ```
 
-### Default Credentials:
-- **Username:** `admin`
-- **Password:** `renewradar2026`
+---
 
-*Note: In development, if database credentials are not yet configured, the system seamlessly runs in **Mock Prototyping Mode** with pre-seeded clients, domains, and hostings so you can test everything right away!*
+## 📄 Licence
+
+RenewRadar is licensed under commercial terms for single-buyer agency deployments. Please read [LICENSE-NOTE.md](./LICENSE-NOTE.md) for full terms, permissions, and restrictions.

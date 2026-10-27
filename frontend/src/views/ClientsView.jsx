@@ -85,15 +85,15 @@ export default function ClientsView({
                       {c.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <div className="flex items-center space-x-2">
-                        <h3 className="text-sm font-bold text-slate-900">{c.name}</h3>
+                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                        <h3 className="text-sm font-bold text-slate-900 whitespace-nowrap">{c.name}</h3>
                         {c.company && (
-                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-medium">
+                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-medium whitespace-nowrap">
                             {c.company}
                           </span>
                         )}
                         {c.has_expired && (
-                          <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                          <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 whitespace-nowrap">
                             Has Expired Asset
                           </span>
                         )}
@@ -102,7 +102,7 @@ export default function ClientsView({
                       <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-600">
                         <a
                           href={`tel:${c.phone}`}
-                          className="flex items-center space-x-1 text-emerald-700 font-semibold hover:underline bg-emerald-50 px-2.5 py-0.5 rounded-lg"
+                          className="flex items-center space-x-1 text-emerald-700 font-semibold hover:underline bg-emerald-50 px-2.5 py-0.5 rounded-lg whitespace-nowrap"
                         >
                           <Phone className="w-3.5 h-3.5" />
                           <span>{c.phone}</span>

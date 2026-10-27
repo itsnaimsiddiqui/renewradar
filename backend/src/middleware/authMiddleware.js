@@ -13,7 +13,7 @@ function authMiddleware(req, res, next) {
   const token = authHeader.split(' ')[1];
   const payload = verifyToken(token);
 
-  if (!payload) {
+  if (!payload || !payload.id) {
     return res.status(401).json({
       success: false,
       message: 'Session expired or invalid token. Please log in again.'
@@ -24,4 +24,20 @@ function authMiddleware(req, res, next) {
   next();
 }
 
-module.exports = authMiddleware;
+function requireRole(role = 'admin') {
+  return (req, res, next) => {
+    if (!req.user || req.user.role !== role) {
+      return res.status(403).json({
+        success: false,
+        message: `Forbidden: Requires ${role} role permissions`
+      });
+    }
+    next();
+  };
+}
+
+module.exports = {
+  authMiddleware,
+  requireRole,
+  requireAdmin: requireRole('admin')
+};

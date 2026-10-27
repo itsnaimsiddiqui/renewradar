@@ -130,12 +130,17 @@ This is a test notification from your Domain & Hosting Expiry Radar!
         created_at: new Date().toISOString()
       };
 
+      if (!req.user || (!req.user.id && !req.user.user_id)) {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+      }
+      const userId = req.user.id || req.user.user_id;
       if (isMockMode()) {
+        logEntry.user_id = userId;
         mockData.notifications.unshift(logEntry);
       } else {
         await query(
-          `INSERT INTO notification_logs (type, item_title, days_remaining, message, status) VALUES ('manual', 'Manual Test Message', 0, ?, 'sent')`,
-          [textToSend]
+          `INSERT INTO notification_logs (user_id, type, item_title, days_remaining, message, status) VALUES (?, 'manual', 'Manual Test Message', 0, ?, 'sent')`,
+          [userId, textToSend]
         );
       }
 
@@ -166,11 +171,15 @@ exports.triggerExpiryCheck = async (req, res) => {
 
 exports.getNotificationLogs = async (req, res) => {
   try {
+    if (!req.user || (!req.user.id && !req.user.user_id)) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    const userId = req.user.id || req.user.user_id;
     let logs = [];
     if (isMockMode()) {
-      logs = mockData.notifications;
+      logs = mockData.notifications.filter(n => n.user_id === userId);
     } else {
-      logs = await query(`SELECT * FROM notification_logs ORDER BY created_at DESC LIMIT 50`);
+      logs = await query(`SELECT * FROM notification_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`, [userId]);
     }
 
     res.json({ success: true, count: logs.length, data: logs });

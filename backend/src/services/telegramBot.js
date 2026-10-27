@@ -1,4 +1,4 @@
-const TelegramBot = require('node-telegram-bot-api');
+const { Bot } = require('grammy');
 const { isMockMode, mockData, query, getAppSetting, setAppSetting } = require('../config/db');
 
 let botInstance = null;
@@ -90,19 +90,30 @@ async function initTelegramBot(tokenOverride) {
   try {
     if (botInstance) {
       try {
-        await botInstance.stopPolling();
+        await botInstance.stop();
       } catch (stopErr) {
         // ignore
       }
       botInstance = null;
     }
 
-    botInstance = new TelegramBot(token.trim(), { polling: true });
-    isBotActive = true;
-    console.log('🤖 [Telegram Bot] Bot initialized and polling for commands.');
+    const bot = new Bot(token.trim());
+    registerBotHandlers(bot);
 
-    registerBotHandlers(botInstance);
-    return botInstance;
+    // Start background polling without blocking
+    bot.start({
+      onStart: (botInfo) => {
+        isBotActive = true;
+        console.log(`🤖 [Telegram Bot] Bot @${botInfo.username} initialized and polling for commands.`);
+      }
+    }).catch(err => {
+      console.warn(`⚠️ [Telegram Bot] Polling stopped or network error: ${err.message}`);
+      isBotActive = false;
+    });
+
+    botInstance = bot;
+    isBotActive = true;
+    return bot;
   } catch (err) {
     console.error('❌ [Telegram Bot] Error initializing bot:', err.message);
     isBotActive = false;
@@ -123,7 +134,7 @@ async function reloadTelegramBot(token, chatId) {
   const activeToken = token ? token.trim() : (await getConfiguredToken());
   if (!activeToken) {
     if (botInstance) {
-      try { await botInstance.stopPolling(); } catch (e) {}
+      try { await botInstance.stop(); } catch (e) {}
       botInstance = null;
     }
     isBotActive = false;
@@ -139,7 +150,7 @@ async function reloadTelegramBot(token, chatId) {
   const activeChatId = chatId ? chatId.trim() : (await getConfiguredChatId());
   if (activeChatId) {
     try {
-      await instance.sendMessage(
+      await instance.api.sendMessage(
         activeChatId,
         `🎉 *RenewRadar Connected!* \n━━━━━━━━━━━━━━━━━━\nYour Telegram Bot is now active and monitoring all domains & hostings.`,
         { parse_mode: 'Markdown' }
@@ -155,8 +166,8 @@ async function reloadTelegramBot(token, chatId) {
 // Register Handlers & Intelligent Natural Language Answers
 function registerBotHandlers(bot) {
   // 1. /start and /help command
-  bot.onText(/\/(start|help)/i, async (msg) => {
-    const chatId = msg.chat.id;
+  bot.command(['start', 'help'], async (ctx) => {
+    const chatId = ctx.chat.id;
     const welcome = `
 👋 *Welcome to RenewRadar Bot!*
 I monitor all your domains, hosting packages, and client combo bundles across Namecheap, Hostinger, HostGator, and other platforms.
@@ -178,7 +189,7 @@ I monitor all your domains, hosting packages, and client combo bundles across Na
 
 Your Chat ID is: \`${chatId}\`
 `;
-    bot.sendMessage(chatId, welcome, {
+    await ctx.reply(welcome, {
       parse_mode: 'Markdown',
       reply_markup: {
         keyboard: [
@@ -192,46 +203,49 @@ Your Chat ID is: \`${chatId}\`
   });
 
   // 2. /status or "status" / "overview" / "summary"
-  bot.onText(/\/(status|overview|summary)/i, async (msg) => {
-    await handleStatus(msg.chat.id);
+  bot.command(['status', 'overview', 'summary'], async (ctx) => {
+    await handleStatus(ctx.chat.id);
   });
 
   // 3. /expired command
-  bot.onText(/\/expired/i, async (msg) => {
-    await handleExpired(msg.chat.id);
+  bot.command('expired', async (ctx) => {
+    await handleExpired(ctx.chat.id);
   });
 
   // 4. /expiring command
-  bot.onText(/\/expiring/i, async (msg) => {
-    await handleExpiring(msg.chat.id);
+  bot.command('expiring', async (ctx) => {
+    await handleExpiring(ctx.chat.id);
   });
 
   // 5. /call_list or who to call
-  bot.onText(/\/(call_list|calls)/i, async (msg) => {
-    await handleCallList(msg.chat.id);
+  bot.command(['call_list', 'calls'], async (ctx) => {
+    await handleCallList(ctx.chat.id);
   });
 
   // 6. /client <name>
-  bot.onText(/\/client (.+)/i, async (msg, match) => {
-    const clientQuery = match[1].trim();
-    await handleClientSearch(msg.chat.id, clientQuery);
+  bot.command('client', async (ctx) => {
+    const clientQuery = (ctx.match || '').trim();
+    if (!clientQuery) {
+      return ctx.reply('Usage: `/client <name>` (e.g. `/client Tanvir`)', { parse_mode: 'Markdown' });
+    }
+    await handleClientSearch(ctx.chat.id, clientQuery);
   });
 
   // 7. /check - manual run
-  bot.onText(/\/check/i, async (msg) => {
-    const chatId = msg.chat.id;
-    bot.sendMessage(chatId, '🔍 Scanning all domains, hostings, and bundles for upcoming expiries...');
+  bot.command('check', async (ctx) => {
+    const chatId = ctx.chat.id;
+    await ctx.reply('🔍 Scanning all domains, hostings, and bundles for upcoming expiries...');
     const reminderCron = require('./reminderCron');
     const result = await reminderCron.runExpiryCheck();
-    bot.sendMessage(chatId, `✅ Scan complete. Processed ${result.checkedCount} items. ${result.alertsSent} notification(s) dispatched.`);
+    await ctx.reply(`✅ Scan complete. Processed ${result.checkedCount} items. ${result.alertsSent} notification(s) dispatched.`);
   });
 
   // 8. Natural Language Handler
-  bot.on('message', async (msg) => {
-    if (!msg.text || msg.text.startsWith('/')) return;
+  bot.on('message:text', async (ctx) => {
+    const text = (ctx.message.text || '').trim().toLowerCase();
+    if (text.startsWith('/')) return;
 
-    const text = msg.text.trim().toLowerCase();
-    const chatId = msg.chat.id;
+    const chatId = ctx.chat.id;
 
     if (text.includes('overview') || text === 'status' || text.includes('summary') || text.includes('how many')) {
       return await handleStatus(chatId);
@@ -272,8 +286,7 @@ Your Chat ID is: \`${chatId}\`
       return await handleCallList(chatId);
     }
 
-    bot.sendMessage(
-      chatId,
+    await ctx.reply(
       `I can help you with domain & hosting tracking. Try asking:\n` +
       `• _"Which domains are expired?"_\n` +
       `• _"Which hosting expired?"_\n` +
@@ -335,7 +348,7 @@ async function handleStatus(chatId) {
 
 💡 _Tip: Type "Who should I call today?" for direct client phone numbers._
 `;
-  botInstance.sendMessage(chatId, msg, { parse_mode: 'Markdown' });
+  await botInstance.api.sendMessage(chatId, msg, { parse_mode: 'Markdown' });
 }
 
 async function handleExpired(chatId, filterType = 'all') {
@@ -383,7 +396,7 @@ async function handleExpired(chatId, filterType = 'all') {
     }
   }
 
-  botInstance.sendMessage(chatId, response, { parse_mode: 'Markdown' });
+  await botInstance.api.sendMessage(chatId, response, { parse_mode: 'Markdown' });
 }
 
 async function handleExpiring(chatId) {
@@ -430,7 +443,7 @@ async function handleExpiring(chatId) {
     });
   }
 
-  botInstance.sendMessage(chatId, response, { parse_mode: 'Markdown' });
+  await botInstance.api.sendMessage(chatId, response, { parse_mode: 'Markdown' });
 }
 
 async function handleCallList(chatId) {
@@ -506,7 +519,7 @@ async function handleCallList(chatId) {
     });
   }
 
-  botInstance.sendMessage(chatId, response, { parse_mode: 'Markdown' });
+  await botInstance.api.sendMessage(chatId, response, { parse_mode: 'Markdown' });
 }
 
 async function handleClientSearch(chatId, clientQuery) {
@@ -519,7 +532,7 @@ async function handleClientSearch(chatId, clientQuery) {
   );
 
   if (foundClients.length === 0) {
-    return botInstance.sendMessage(chatId, `❌ No client found matching "${clientQuery}".`);
+    return await botInstance.api.sendMessage(chatId, `❌ No client found matching "${clientQuery}".`);
   }
 
   let response = `🔍 *Search Results for "${clientQuery}":*\n\n`;
@@ -534,7 +547,7 @@ async function handleClientSearch(chatId, clientQuery) {
     response += `🖥️ Hostings (${clientHostings.length}): ${clientHostings.map(h => `${h.package_name} [${formatDate(h.expiry_date)}]`).join(', ') || 'None'}\n\n`;
   }
 
-  botInstance.sendMessage(chatId, response, { parse_mode: 'Markdown' });
+  await botInstance.api.sendMessage(chatId, response, { parse_mode: 'Markdown' });
 }
 
 // Proactive Expiry Alert Method
@@ -581,7 +594,7 @@ ${accountLabel ? `🏢 *Platform/Account:* ${accountLabel}\n` : ''}📅 *Expiry 
 `;
 
   try {
-    await botInstance.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+    await botInstance.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
     return true;
   } catch (err) {
     console.error('Error sending proactive telegram message:', err.message);
@@ -597,7 +610,7 @@ async function sendDirectMessage(targetChatId, text) {
   }
 
   try {
-    await botInstance.sendMessage(id, text, { parse_mode: 'Markdown' });
+    await botInstance.api.sendMessage(id, text, { parse_mode: 'Markdown' });
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };

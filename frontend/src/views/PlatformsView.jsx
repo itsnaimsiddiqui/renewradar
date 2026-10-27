@@ -81,9 +81,9 @@ export default function PlatformsView({
                       <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 font-bold flex items-center justify-center shrink-0">
                         {p.name.charAt(0).toUpperCase()}
                       </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900 text-sm">{p.name}</h3>
-                        <span className="inline-block mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-slate-900 text-sm truncate">{p.name}</h3>
+                        <span className="inline-block mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded whitespace-nowrap">
                           {isBoth ? 'Domains & Hosting' : isReg ? 'Domain Registrar' : 'Hosting Provider'}
                         </span>
                       </div>
